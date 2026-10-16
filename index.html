@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Detector de Humo · Auditoría de bots de trading</title>
+<meta name="description" content="Auditamos tu bot de trading (MT5 y StrategyQuant) con costos reales de tu broker, walk-forward, Monte Carlo y prueba de azar. ¿Ventaja real o humo?">
+<meta property="og:title" content="Detector de Humo · ¿Tu bot tiene ventaja real o es humo?">
+<meta property="og:description" content="Auditoría de bots de trading con costos reales, walk-forward, Monte Carlo y prueba de azar.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://detectordehumo.github.io/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23f8f9fb' stroke='%2314202b' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23e5402f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: plástico de detector de techo (gris frío) + LED de alarma. Hero partido: tesis a la izquierda, "lectura del detector" a la derecha; después bandas de contenido. */
+:root{
+  --bg:#eceff2; --surface:#f8f9fb; --ink:#14202b; --muted:#566370; --line:#cfd5dc;
+  --alarm:#e5402f; --alarm-soft:#fbe3df; --ok:#14866d; --ok-soft:#dcf1eb;
+  --band:#14202b; --band-ink:#eceff2; --band-muted:#a7b3bf;
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161d; --surface:#17212b; --ink:#e6ebf0; --muted:#97a4b1; --line:#2a3744;
+  --alarm:#ff5a45; --alarm-soft:#3a1d1a; --ok:#3cc6a2; --ok-soft:#143229;
+  --band:#1c2833; --band-ink:#e6ebf0; --band-muted:#97a4b1; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161d; --surface:#17212b; --ink:#e6ebf0; --muted:#97a4b1; --line:#2a3744;
+  --alarm:#ff5a45; --alarm-soft:#3a1d1a; --ok:#3cc6a2; --ok-soft:#143229;
+  --band:#1c2833; --band-ink:#e6ebf0; --band-muted:#97a4b1; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6}
+img{max-width:100%}
+[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.12;margin:0}
+h2{font-size:clamp(1.6rem,3.4vw,2.4rem);font-weight:700}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0}
+a{color:inherit}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:.5em;font-family:var(--f-body);font-weight:700;font-size:1rem;padding:.85em 1.4em;border-radius:999px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--alarm);border-color:var(--alarm);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn[disabled]{opacity:.6;cursor:wait}
+:focus-visible{outline:3px solid var(--alarm);outline-offset:3px}
+
+header{padding-block:22px}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--f-display);font-weight:800;font-size:1.15rem;text-decoration:none;letter-spacing:-.01em}
+.brand-txt{display:grid;line-height:1.1}
+.brand-txt small{font-family:var(--f-body);font-weight:800;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--alarm);margin-top:5px}
+.det{width:38px;height:38px;border-radius:50%;background:var(--surface);border:2px solid var(--ink);display:grid;place-items:center;position:relative;flex:none}
+.det::before{content:"";position:absolute;inset:6px;border-radius:50%;border:1.5px dashed var(--line)}
+.led{width:9px;height:9px;border-radius:50%;background:var(--alarm);animation:blink 2.4s infinite;position:relative}
+@keyframes blink{0%,70%,100%{opacity:1;box-shadow:0 0 0 0 color-mix(in srgb,var(--alarm) 60%,transparent)}80%{opacity:.35;box-shadow:0 0 0 7px transparent}}
+nav{display:flex;gap:22px;flex-wrap:wrap;font-weight:600;font-size:.95rem}
+nav a{text-decoration:none;color:var(--muted)}
+nav a:hover{color:var(--ink)}
+
+.hero{padding-block:40px 72px}
+.hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(2.3rem,5.6vw,4.3rem);font-weight:800;letter-spacing:-.025em}
+.hero h1 em{font-style:normal;color:var(--alarm)}
+.hero .lead{font-size:1.2rem;color:var(--muted);max-width:34em;margin-top:22px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.hero .fine{margin-top:18px;font-size:.9rem;color:var(--muted)}
+.hero-copy{min-width:0}
+
+.reading{background:var(--surface);border:2px solid var(--ink);border-radius:22px;padding:24px;font-family:var(--f-mono);font-size:.88rem;min-width:0;box-shadow:8px 8px 0 var(--ink)}
+.reading-top{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1.5px dashed var(--line);padding-bottom:14px;margin-bottom:12px}
+.reading-top b{font-weight:600;overflow-wrap:anywhere}
+.tag{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.row:last-of-type{border-bottom:0}
+.row span:first-child{color:var(--muted)}
+.pass{color:var(--ok);font-weight:600}
+.fail{color:var(--alarm);font-weight:600}
+.verdict{margin-top:16px;border-radius:14px;padding:14px 16px;background:var(--alarm-soft);color:var(--alarm);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.verdict strong{font-family:var(--f-display);font-size:1.5rem;letter-spacing:.02em}
+.verdict small{font-size:.78rem;color:var(--ink);opacity:.8;text-align:right;max-width:16em}
+
+.band{background:var(--band);color:var(--band-ink);padding-block:56px}
+.band .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.stat b{display:block;font-family:var(--f-display);font-size:clamp(2.2rem,4.5vw,3.2rem);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat p{color:var(--band-muted);margin-top:8px;max-width:22em}
+
+section.block{padding-block:84px}
+.head{display:grid;gap:14px;max-width:44em;margin-bottom:44px}
+.head p{color:var(--muted);font-size:1.1rem}
+
+.tests{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.test{background:var(--surface);padding:28px 26px;display:grid;gap:10px;align-content:start}
+.test .q{font-family:var(--f-mono);font-size:.8rem;color:var(--alarm)}
+.test p{color:var(--muted);font-size:.98rem}
+
+.sample{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.sample > *{min-width:0}
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px}
+.chart-card .tag{display:block;margin-bottom:10px}
+#hist{width:100%;height:auto;display:block}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.sample ul{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:14px}
+.sample li{display:grid;grid-template-columns:22px 1fr;gap:10px}
+.sample li::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--alarm);margin-top:9px}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;counter-reset:s}
+.step{display:grid;gap:10px;align-content:start;border-top:2px solid var(--ink);padding-top:20px}
+.step::before{counter-increment:s;content:"Paso " counter(s);font-family:var(--f-mono);font-size:.8rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.step p{color:var(--muted)}
+
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:30px 26px;display:flex;flex-direction:column;gap:16px}
+.plan.star{border:2px solid var(--ink);box-shadow:8px 8px 0 var(--alarm)}
+.plan .price{font-family:var(--f-display);font-size:2.4rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.plan .price small{font-family:var(--f-body);font-size:.95rem;font-weight:500;color:var(--muted);letter-spacing:0}
+.plan ul{list-style:none;padding:0;margin:0;display:grid;gap:9px;color:var(--muted);font-size:.97rem;flex:1}
+.plan li{padding-left:22px;position:relative}
+.plan li::before{content:"";position:absolute;left:2px;top:.62em;width:9px;height:9px;border-radius:2px;background:var(--ok)}
+.pill{align-self:flex-start;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;background:var(--alarm);color:#fff;padding:4px 10px;border-radius:999px}
+.pay{margin-top:26px;color:var(--muted);font-size:.95rem}
+
+.nots{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.not{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:22px;border-radius:16px;background:var(--alarm-soft)}
+.not .x{font-family:var(--f-display);color:var(--alarm);font-size:1.3rem;line-height:1}
+.not p{color:var(--ink);opacity:.85;font-size:.98rem}
+
+.faq{display:grid;gap:12px;max-width:820px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 22px}
+summary{cursor:pointer;font-weight:700;padding:16px 0;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--f-display);color:var(--alarm)}
+details[open] summary::after{content:"–"}
+details p{color:var(--muted);padding-bottom:18px}
+
+.contact{background:var(--band);color:var(--band-ink);padding-block:80px}
+.contact .wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.contact .wrap > *{min-width:0}
+.contact p.sub{color:var(--band-muted);margin-top:16px;font-size:1.1rem}
+form{display:grid;gap:14px}
+label{font-size:.85rem;font-weight:600;color:var(--band-muted);display:grid;gap:6px}
+input,select,textarea{font:inherit;font-size:1rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+textarea{min-height:96px;resize:vertical}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.contact .btn{background:var(--alarm);border-color:var(--alarm);color:#fff;justify-self:start}
+.contact .btn:hover{background:var(--band-ink);border-color:var(--band-ink);color:var(--band)}
+#ok{border-radius:12px;padding:14px 16px;font-weight:600}
+#ok.good{background:var(--ok-soft);color:var(--ok)}
+#ok.bad{background:var(--alarm-soft);color:var(--alarm)}
+.direct{margin-top:28px;display:grid;gap:8px;font-family:var(--f-mono);font-size:.92rem;color:var(--band-muted)}
+.direct b,.direct a{color:var(--band-ink);font-weight:600;overflow-wrap:anywhere}
+
+footer{padding-block:36px;font-size:.85rem;color:var(--muted)}
+footer .wrap{display:grid;gap:10px}
+
+@media (max-width:900px){
+  .hero .wrap,.sample,.contact .wrap{grid-template-columns:1fr;gap:40px}
+  .tests,.plans,.steps{grid-template-columns:1fr 1fr}
+}
+@media (max-width:620px){
+  .tests,.plans,.steps,.nots,.band .wrap{grid-template-columns:1fr}
+  nav{display:none}
+  .reading{box-shadow:5px 5px 0 var(--ink)}
+  section.block{padding-block:60px}
+}
+@media (prefers-reduced-motion:reduce){.led{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Detector de Humo, inicio"><span class="det"><span class="led"></span></span><span class="brand-txt">Detector de Humo<small>para bots de trading</small></span></a>
+    <nav aria-label="Secciones">
+      <a href="#pruebas">Qué medimos</a>
+      <a href="#ejemplo">Ejemplo</a>
+      <a href="#precios">Precios</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <p class="eyebrow" style="color:var(--alarm);font-weight:600">Auditoría de bots de trading · MT5 y StrategyQuant</p>
+        <h1 style="margin-top:14px">¿Tu bot tiene ventaja real o es <em>humo</em>?</h1>
+        <p class="lead">Antes de ponerlo en una cuenta real o en un fondeo, lo sometemos a las pruebas que casi nadie hace: costos reales de tu broker, Monte Carlo, prueba de azar y comparación contra comprar y mantener.</p>
+        <div class="ctas">
+          <a class="btn" href="#contacto">Auditar mi bot</a>
+          <a class="btn ghost" href="#ejemplo">Ver un informe de ejemplo</a>
+        </div>
+        <p class="fine">MT5 y StrategyQuant (.mq5, .ex5, .sqx) · Informe en 48 a 72 h · Tu código no se comparte</p>
+      </div>
+
+      <aside class="reading" aria-label="Ejemplo ilustrativo de lectura del detector">
+        <div class="reading-top"><b>XAUUSD_H1_Breakout.ex5</b><span class="tag">Ejemplo ilustrativo</span></div>
+        <div class="row"><span>Backtest del vendedor</span><span class="pass">PF 1,62</span></div>
+        <div class="row"><span>Con costos reales del broker</span><span class="fail">PF 1,08</span></div>
+        <div class="row"><span>Walk-forward fuera de muestra</span><span class="fail">4 de 9 ventanas</span></div>
+        <div class="row"><span>Prueba de azar (permutación)</span><span class="fail">p = 0,27</span></div>
+        <div class="row"><span>¿Le gana a comprar y mantener?</span><span class="fail">No</span></div>
+        <div class="row"><span>Monte Carlo, DD peor 5%</span><span>−23,4%</span></div>
+        <div class="verdict"><strong>HUMO</strong><small>La ganancia viene de la suba del oro, no de la estrategia.</small></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="band" aria-label="Nuestra experiencia">
+    <div class="wrap">
+      <div class="stat"><b>+190</b><p>ideas y estrategias registradas y probadas con el mismo protocolo.</p></div>
+      <div class="stat"><b>34.000</b><p>estrategias generadas por nuestro propio motor. Ninguna pasó en condiciones de cuenta de fondeo.</p></div>
+      <div class="stat"><b>0</b><p>promesas de ganancia. Te decimos lo que muestran los números, aunque no guste.</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="pruebas">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow">Qué medimos</p>
+        <h2>Seis preguntas que un backtest bonito no responde</h2>
+        <p>Un bot puede verse perfecto en la curva del vendedor y perder plata desde el primer mes. Estas pruebas separan una ventaja real de la suerte y del sobreajuste.</p>
+      </div>
+      <div class="tests">
+        <div class="test"><span class="q">¿Sobrevive a los costos?</span><h3>Costos reales de tu cuenta</h3><p>Spread, comisión y swap del broker donde lo vas a usar: Exness, Orion, FTMO, Darwinex u otro.</p></div>
+        <div class="test"><span class="q">¿Funciona en datos que no vio?</span><h3>Walk-forward</h3><p>Optimizamos en un tramo y probamos en el siguiente, ventana por ventana, como si fuera en vivo.</p></div>
+        <div class="test"><span class="q">¿Es mejor que tirar una moneda?</span><h3>Prueba de azar</h3><p>Comparamos tu bot contra cientos de versiones con entradas al azar. Si no se despega, no hay ventaja.</p></div>
+        <div class="test"><span class="q">¿Hace algo más que acompañar al mercado?</span><h3>Comparación con comprar y mantener</h3><p>Muchos bots de oro o índices solo surfean la tendencia. Medimos qué parte de la ganancia es mérito propio.</p></div>
+        <div class="test"><span class="q">¿Cuánto puede doler?</span><h3>Monte Carlo</h3><p>Reordenamos y alteramos las operaciones miles de veces para estimar el drawdown en un mal escenario.</p></div>
+        <div class="test"><span class="q">¿Pasaría un fondeo?</span><h3>Reglas de prop firms</h3><p>Simulamos pérdida diaria, pérdida máxima y objetivo para estimar la probabilidad de pasar el desafío.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="ejemplo" style="padding-top:0">
+    <div class="wrap sample">
+      <div class="chart-card">
+        <span class="tag">Ejemplo ilustrativo · Prueba de azar · 1.000 permutaciones</span>
+        <svg id="hist" viewBox="0 0 520 300" role="img" aria-label="Histograma del factor de beneficio de 1.000 versiones al azar, con el bot auditado marcado en 1,08, dentro de la zona del azar"></svg>
+        <div class="legend"><span><i style="background:var(--line)"></i>Versiones al azar</span><span><i style="background:var(--alarm)"></i>Bot auditado</span></div>
+      </div>
+      <div>
+        <p class="eyebrow">Cómo se ve un informe</p>
+        <h2 style="margin-top:12px">Un veredicto claro, con el porqué</h2>
+        <p style="color:var(--muted);margin-top:16px">En este ejemplo el bot gana dinero, pero 27 de cada 100 versiones al azar ganan lo mismo o más. Eso no es ventaja: es el mercado.</p>
+        <ul>
+          <li><span>Veredicto: <b>Ventaja real</b>, <b>Dudoso</b> o <b>Humo</b>.</span></li>
+          <li><span>Cada prueba con su número y una explicación en lenguaje simple.</span></li>
+          <li><span>Qué cambiaría para mejorarlo, si hay algo rescatable.</span></li>
+          <li><span>Lote sugerido según tu cuenta y tu tolerancia al drawdown.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="head"><p class="eyebrow">Cómo funciona</p><h2>Tres pasos, sin vueltas</h2></div>
+      <div class="steps">
+        <div class="step"><h3>Mandás el bot</h3><p>El archivo .ex5, .mq5 o .sqx, el activo, la temporalidad y el broker o fondeo donde lo querés usar.</p></div>
+        <div class="step"><h3>Lo pasamos por el detector</h3><p>Corremos las seis pruebas con datos históricos largos y los costos de tu cuenta.</p></div>
+        <div class="step"><h3>Recibís el informe</h3><p>En 48 a 72 h, en PDF, con el veredicto y una videollamada corta si querés repasarlo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="precios" style="padding-top:0">
+    <div class="wrap">
+      <div class="head"><p class="eyebrow">Precios</p><h2>Más barato que un mes perdiendo con un bot malo</h2></div>
+      <div class="plans">
+        <div class="plan">
+          <h3>Chequeo rápido</h3>
+          <div class="price">US$30 <small>por bot</small></div>
+          <ul><li>Backtest con costos reales de tu broker</li><li>Prueba de azar</li><li>Veredicto en una página</li></ul>
+          <a class="btn ghost" href="#contacto" data-plan="Chequeo rápido">Elegir</a>
+        </div>
+        <div class="plan star">
+          <span class="pill">El más pedido</span>
+          <h3>Auditoría completa</h3>
+          <div class="price">US$60 <small>por bot</small></div>
+          <ul><li>Las seis pruebas</li><li>Informe PDF detallado</li><li>Sugerencias de mejora</li><li>Videollamada de 20 minutos</li></ul>
+          <a class="btn" href="#contacto" data-plan="Auditoría completa">Elegir</a>
+        </div>
+        <div class="plan">
+          <h3>Auditoría para fondeo</h3>
+          <div class="price">US$80 <small>por bot</small></div>
+          <ul><li>Todo lo de la completa</li><li>Simulación con las reglas de tu prop firm</li><li>Probabilidad de pasar y lote recomendado</li></ul>
+          <a class="btn ghost" href="#contacto" data-plan="Auditoría para fondeo">Elegir</a>
+        </div>
+      </div>
+      <p class="pay">Pagás en pesos por Mercado Pago, o en dólares por PayPal o cripto (USDT). Si auditás 3 bots o más, te hacemos precio.</p>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="head"><p class="eyebrow">Lo que no hacemos</p><h2>Reglas claras desde el principio</h2></div>
+      <div class="nots">
+        <div class="not"><span class="x">×</span><p><b>No prometemos ganancias.</b> Medimos el pasado con rigor. El futuro no lo garantiza nadie.</p></div>
+        <div class="not"><span class="x">×</span><p><b>No compartimos tu bot.</b> El archivo se usa solo para la auditoría y se borra al terminar si lo pedís.</p></div>
+        <div class="not"><span class="x">×</span><p><b>No vendemos señales</b> ni manejamos dinero de terceros.</p></div>
+        <div class="not"><span class="x">×</span><p><b>No maquillamos resultados.</b> Si es humo, te lo decimos, y te explicamos por qué.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="head"><p class="eyebrow">Preguntas frecuentes</p><h2>Lo que más nos preguntan</h2></div>
+      <div class="faq">
+        <details><summary>¿Necesitan el código fuente?</summary><p>No. Con el .ex5 alcanza para la mayoría de las pruebas. Con el .mq5 o el .sqx podemos además revisar la lógica y detectar errores como mirar datos del futuro.</p></details>
+        <details><summary>¿Qué pasa si mi bot sale "humo"?</summary><p>Te explicamos qué prueba falló y por qué. Muchas veces hay una parte rescatable: un activo, un horario o un filtro que sí tiene ventaja.</p></details>
+        <details><summary>¿Sirve para bots comprados?</summary><p>Sí, es uno de los casos más comunes. Antes de pagar una licencia cara o arriesgar un fondeo, conviene saber si el backtest del vendedor resiste costos reales.</p></details>
+        <details><summary>¿Qué activos y plataformas auditan?</summary><p>MetaTrader 5 y StrategyQuant X. Forex, oro, plata, índices y cripto, en cualquier temporalidad desde M5.</p></details>
+        <details><summary>¿Cuánto tarda?</summary><p>Entre 48 y 72 horas hábiles desde que recibimos el archivo y el pago.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contacto">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow" style="color:var(--band-muted)">Contacto</p>
+        <h2 style="margin-top:12px">Pasá tu bot por el detector</h2>
+        <p class="sub">Contanos qué bot querés auditar y dónde lo vas a usar. Te respondemos por mail con el presupuesto, normalmente el mismo día.</p>
+        <div class="direct">
+          <span>Mail: <a href="mailto:detectordehumo.bots@gmail.com">detectordehumo.bots@gmail.com</a></span>
+        </div>
+      </div>
+      <form id="f" action="https://formsubmit.co/detectordehumo.bots@gmail.com" method="POST" novalidate>
+        <input type="hidden" name="_subject" value="Detector de Humo: nuevo pedido de presupuesto">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_captcha" value="false">
+        <label class="hp" aria-hidden="true">No completar<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+        <label for="nombre">Nombre<input id="nombre" name="nombre" autocomplete="name" placeholder="Tu nombre" required></label>
+        <label for="mail">Mail<input id="mail" name="email" type="email" autocomplete="email" placeholder="Donde te respondemos" required></label>
+        <label for="plan">Servicio<select id="plan" name="servicio"><option>Chequeo rápido</option><option selected>Auditoría completa</option><option>Auditoría para fondeo</option></select></label>
+        <label for="bot">Tu bot<textarea id="bot" name="bot" placeholder="Activo, temporalidad, broker o prop firm (ej.: XAUUSD H1, FTMO 100k)"></textarea></label>
+        <button class="btn" type="submit" id="send">Pedir presupuesto</button>
+        <p id="ok" hidden role="status"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Detector de Humo</b> · Auditoría de bots de trading · <a href="mailto:detectordehumo.bots@gmail.com">detectordehumo.bots@gmail.com</a></p>
+    <p>El trading con apalancamiento implica alto riesgo de pérdida. Los resultados históricos no garantizan resultados futuros. Este servicio es un análisis estadístico y no constituye asesoramiento financiero.</p>
+  </div>
+</footer>
+
+<script>
+// Elegir plan desde las tarjetas de precios
+document.querySelectorAll('[data-plan]').forEach(a=>a.addEventListener('click',()=>{document.getElementById('plan').value=a.dataset.plan}));
+
+// Formulario: envía al mail del negocio vía FormSubmit (AJAX); si falla, ofrece el mail directo
+document.getElementById('f').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const f=e.target,ok=document.getElementById('ok'),btn=document.getElementById('send');
+  const n=f.nombre.value.trim(),m=f.email.value.trim();
+  const show=(cls,txt)=>{ok.hidden=false;ok.className=cls;ok.textContent=txt};
+  if(!n||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){show('bad','Completá tu nombre y un mail válido para poder responderte.');return}
+  btn.disabled=true;btn.textContent='Enviando…';
+  try{
+    const r=await fetch('https://formsubmit.co/ajax/detectordehumo.bots@gmail.com',{method:'POST',headers:{'Accept':'application/json'},body:new FormData(f)});
+    if(!r.ok)throw new Error(r.status);
+    show('good','Listo, '+n.split(' ')[0]+'. Recibimos tu pedido y te escribimos con el presupuesto.');
+    f.reset();
+  }catch(err){
+    show('bad','No se pudo enviar. Escribinos directo a detectordehumo.bots@gmail.com');
+  }finally{btn.disabled=false;btn.textContent='Pedir presupuesto'}
+});
+
+// Histograma ilustrativo: PF de 1.000 permutaciones (datos simulados, semilla fija)
+(function(){
+  const svg=document.getElementById('hist'),NS='http://www.w3.org/2000/svg';
+  let s=7;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};
+  const g=()=>Math.sqrt(-2*Math.log(r()))*Math.cos(2*Math.PI*r());
+  const vals=Array.from({length:1000},()=>0.99+0.15*g());
+  const lo=0.6,hi=1.4,bw=0.025,nb=Math.round((hi-lo)/bw),bins=new Array(nb).fill(0);
+  vals.forEach(v=>{const i=Math.floor((v-lo)/bw);if(i>=0&&i<nb)bins[i]++});
+  const W=520,H=300,L=40,R=12,T=16,B=40,pw=W-L-R,ph=H-T-B,max=Math.ceil(Math.max(...bins)/20)*20;
+  const x=v=>L+(v-lo)/(hi-lo)*pw,y=c=>T+ph-c/max*ph;
+  const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e};
+  for(let c=0;c<=max;c+=max/4){el('line',{x1:L,x2:W-R,y1:y(c),y2:y(c),stroke:'var(--line)','stroke-width':1});
+    el('text',{x:L-8,y:y(c)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=c}
+  const bot=1.08,above=vals.filter(v=>v>=bot).length;
+  bins.forEach((c,i)=>{const v0=lo+i*bw;el('rect',{x:x(v0)+1,y:y(c),width:pw/nb-2,height:y(0)-y(c),rx:2,fill:v0+bw>bot?'var(--alarm-soft)':'var(--line)'})});
+  for(let v=0.6;v<=1.401;v+=0.2){el('text',{x:x(v),y:H-B+20,'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=v.toFixed(1).replace('.',',')}
+  el('text',{x:L+pw/2,y:H-4,'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--f-body)'}).textContent='Factor de beneficio (PF)';
+  el('line',{x1:x(bot),x2:x(bot),y1:T,y2:y(0),stroke:'var(--alarm)','stroke-width':2.5});
+  el('text',{x:x(bot)+8,y:T+14,'font-size':12,fill:'var(--alarm)','font-weight':700,'font-family':'var(--f-mono)'}).textContent='Bot: PF 1,08';
+  el('text',{x:x(bot)+8,y:T+30,'font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=(above/10).toFixed(0)+'% al azar igual o mejor';
+})();
+</script>
+</body>
+</html>
