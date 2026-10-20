@@ -9,6 +9,12 @@
 <meta property="og:description" content="Auditoría de bots de trading con costos reales, walk-forward, Monte Carlo y prueba de azar.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://detectordehumo.github.io/">
+<meta property="og:image" content="https://detectordehumo.github.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="es_AR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://detectordehumo.github.io/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23f8f9fb' stroke='%2314202b' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23e5402f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +23,7 @@
 /* Layout: plástico de detector de techo (gris frío) + LED de alarma. Hero partido: tesis a la izquierda, "lectura del detector" a la derecha; después bandas de contenido. */
 :root{
   --bg:#eceff2; --surface:#f8f9fb; --ink:#14202b; --muted:#566370; --line:#cfd5dc;
-  --alarm:#e5402f; --alarm-soft:#fbe3df; --ok:#14866d; --ok-soft:#dcf1eb;
+  --alarm:#e5402f; --alarm-soft:#fbe3df; --ok:#14866d; --ok-soft:#dcf1eb; --warn:#a96b0c; --warn-soft:#fbf1de;
   --band:#14202b; --band-ink:#eceff2; --band-muted:#a7b3bf;
   --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -26,11 +32,11 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f161d; --surface:#17212b; --ink:#e6ebf0; --muted:#97a4b1; --line:#2a3744;
-  --alarm:#ff5a45; --alarm-soft:#3a1d1a; --ok:#3cc6a2; --ok-soft:#143229;
+  --alarm:#ff5a45; --alarm-soft:#3a1d1a; --ok:#3cc6a2; --ok-soft:#143229; --warn:#f0b54a; --warn-soft:#3a2c12;
   --band:#1c2833; --band-ink:#e6ebf0; --band-muted:#97a4b1; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f161d; --surface:#17212b; --ink:#e6ebf0; --muted:#97a4b1; --line:#2a3744;
-  --alarm:#ff5a45; --alarm-soft:#3a1d1a; --ok:#3cc6a2; --ok-soft:#143229;
+  --alarm:#ff5a45; --alarm-soft:#3a1d1a; --ok:#3cc6a2; --ok-soft:#143229; --warn:#f0b54a; --warn-soft:#3a2c12;
   --band:#1c2833; --band-ink:#e6ebf0; --band-muted:#97a4b1; color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -83,6 +89,10 @@ nav a:hover{color:var(--ink)}
 .row span:first-child{color:var(--muted)}
 .pass{color:var(--ok);font-weight:600}
 .fail{color:var(--alarm);font-weight:600}
+.warn{color:var(--warn);font-weight:600}
+.row span:last-child{text-align:right;white-space:nowrap}
+.reading-top{flex-wrap:wrap}
+.verdict.dudoso{background:var(--warn-soft);color:var(--warn)}
 .verdict{margin-top:16px;border-radius:14px;padding:14px 16px;background:var(--alarm-soft);color:var(--alarm);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .verdict strong{font-family:var(--f-display);font-size:1.5rem;letter-spacing:.02em}
 .verdict small{font-size:.78rem;color:var(--ink);opacity:.8;text-align:right;max-width:16em}
@@ -197,20 +207,21 @@ footer .wrap{display:grid;gap:10px}
         <p class="lead">Antes de ponerlo en una cuenta real o en un fondeo, lo sometemos a las pruebas que casi nadie hace: costos reales de tu broker, Monte Carlo, prueba de azar y comparación contra comprar y mantener.</p>
         <div class="ctas">
           <a class="btn" href="#contacto">Auditar mi bot</a>
-          <a class="btn ghost" href="#ejemplo">Ver un informe de ejemplo</a>
+          <a class="btn ghost" href="#ejemplo">Ver un informe real</a>
         </div>
         <p class="fine">MT5 y StrategyQuant (.mq5, .ex5, .sqx) · Informe en 48 a 72 h · Tu código no se comparte</p>
       </div>
 
-      <aside class="reading" aria-label="Ejemplo ilustrativo de lectura del detector">
-        <div class="reading-top"><b>XAUUSD_H1_Breakout.ex5</b><span class="tag">Ejemplo ilustrativo</span></div>
-        <div class="row"><span>Backtest del vendedor</span><span class="pass">PF 1,62</span></div>
-        <div class="row"><span>Con costos reales del broker</span><span class="fail">PF 1,08</span></div>
-        <div class="row"><span>Walk-forward fuera de muestra</span><span class="fail">4 de 9 ventanas</span></div>
-        <div class="row"><span>Prueba de azar (permutación)</span><span class="fail">p = 0,27</span></div>
-        <div class="row"><span>¿Le gana a comprar y mantener?</span><span class="fail">No</span></div>
-        <div class="row"><span>Monte Carlo, DD peor 5%</span><span>−23,4%</span></div>
-        <div class="verdict"><strong>HUMO</strong><small>La ganancia viene de la suba del oro, no de la estrategia.</small></div>
+      <aside class="reading" aria-label="Lectura del detector sobre un bot real de oro">
+        <div class="reading-top"><b>XAUUSD_H4_Tendencia</b><span class="tag">Caso real · bot propio</span></div>
+        <div class="row"><span>Backtest sin costos</span><span class="pass">PF 1,36</span></div>
+        <div class="row"><span>Con costos reales del broker</span><span class="pass">PF 1,35</span></div>
+        <div class="row"><span>Walk-forward fuera de muestra</span><span class="warn">2 de 4 tramos</span></div>
+        <div class="row"><span>Prueba de azar (permutación)</span><span class="warn">p = 0,054</span></div>
+        <div class="row"><span>Con el oro lateral (2021-22)</span><span class="fail">PF 0,87</span></div>
+        <div class="row"><span>Monte Carlo, caída peor&nbsp;5&nbsp;%</span><span>US$926 / 0,01 lote</span></div>
+        <div class="row"><span>¿Apto para fondeo?</span><span class="fail">No</span></div>
+        <div class="verdict dudoso"><strong>DUDOSO</strong><small>Gana cuando el oro tiende. Cuando no tiende, pierde.</small></div>
       </aside>
     </div>
   </section>
@@ -244,20 +255,21 @@ footer .wrap{display:grid;gap:10px}
   <section class="block" id="ejemplo" style="padding-top:0">
     <div class="wrap sample">
       <div class="chart-card">
-        <span class="tag">Ejemplo ilustrativo · Prueba de azar · 1.000 permutaciones</span>
-        <svg id="hist" viewBox="0 0 520 300" role="img" aria-label="Histograma del factor de beneficio de 1.000 versiones al azar, con el bot auditado marcado en 1,08, dentro de la zona del azar"></svg>
-        <div class="legend"><span><i style="background:var(--line)"></i>Versiones al azar</span><span><i style="background:var(--alarm)"></i>Bot auditado</span></div>
+        <span class="tag">Caso real · Prueba de azar · 1.000 historias barajadas</span>
+        <svg id="hist" viewBox="0 0 520 300" role="img" aria-label="Histograma del factor de beneficio en 1.000 historias al azar, con el bot real marcado en 1,35: el 5,4 % del azar lo iguala o supera"></svg>
+        <div class="legend"><span><i style="background:var(--line)"></i>Historias al azar</span><span><i style="background:var(--alarm)"></i>Igualan o superan al bot</span></div>
       </div>
       <div>
         <p class="eyebrow">Cómo se ve un informe</p>
         <h2 style="margin-top:12px">Un veredicto claro, con el porqué</h2>
-        <p style="color:var(--muted);margin-top:16px">En este ejemplo el bot gana dinero, pero 27 de cada 100 versiones al azar ganan lo mismo o más. Eso no es ventaja: es el mercado.</p>
+        <p style="color:var(--muted);margin-top:16px">Auditamos uno de nuestros propios bots de oro con el mismo proceso que usamos con los tuyos. Pasa los costos y el Monte Carlo, y la prueba de azar por poco. Pero de 2021 a 2024 no ganó nada mientras el oro subía 47 %: su ganancia depende de la tendencia. Veredicto: <b>dudoso</b>, y no apto para fondeo.</p>
         <ul>
           <li><span>Veredicto: <b>Ventaja real</b>, <b>Dudoso</b> o <b>Humo</b>.</span></li>
-          <li><span>Cada prueba con su número y una explicación en lenguaje simple.</span></li>
-          <li><span>Qué cambiaría para mejorarlo, si hay algo rescatable.</span></li>
-          <li><span>Lote sugerido según tu cuenta y tu tolerancia al drawdown.</span></li>
+          <li><span>Cada prueba con su número, su gráfico y una explicación en lenguaje simple.</span></li>
+          <li><span>Qué haríamos con el bot, y si hay algo rescatable.</span></li>
+          <li><span>Lote sugerido según tu cuenta y la caída que podés aguantar.</span></li>
         </ul>
+        <div class="ctas" style="margin-top:28px"><a class="btn" href="informe-de-muestra.pdf" target="_blank" rel="noopener">Ver el informe completo (PDF)</a></div>
       </div>
     </div>
   </section>
@@ -317,6 +329,7 @@ footer .wrap{display:grid;gap:10px}
     <div class="wrap">
       <div class="head"><p class="eyebrow">Preguntas frecuentes</p><h2>Lo que más nos preguntan</h2></div>
       <div class="faq">
+        <details><summary>¿Puedo ver un informe antes de pedir?</summary><p>Sí. Publicamos la <a href="informe-de-muestra.pdf" target="_blank" rel="noopener">auditoría completa de uno de nuestros bots</a>, con todos los números reales. Es exactamente lo que recibís.</p></details>
         <details><summary>¿Necesitan el código fuente?</summary><p>No. Con el .ex5 alcanza para la mayoría de las pruebas. Con el .mq5 o el .sqx podemos además revisar la lógica y detectar errores como mirar datos del futuro.</p></details>
         <details><summary>¿Qué pasa si mi bot sale "humo"?</summary><p>Te explicamos qué prueba falló y por qué. Muchas veces hay una parte rescatable: un activo, un horario o un filtro que sí tiene ventaja.</p></details>
         <details><summary>¿Sirve para bots comprados?</summary><p>Sí, es uno de los casos más comunes. Antes de pagar una licencia cara o arriesgar un fondeo, conviene saber si el backtest del vendedor resiste costos reales.</p></details>
@@ -382,26 +395,24 @@ document.getElementById('f').addEventListener('submit',async e=>{
   }finally{btn.disabled=false;btn.textContent='Pedir presupuesto'}
 });
 
-// Histograma ilustrativo: PF de 1.000 permutaciones (datos simulados, semilla fija)
+// Histograma real: PF de las 1.000 historias barajadas del informe de muestra (bot de oro H4, PF real 1,35)
 (function(){
   const svg=document.getElementById('hist'),NS='http://www.w3.org/2000/svg';
-  let s=7;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};
-  const g=()=>Math.sqrt(-2*Math.log(r()))*Math.cos(2*Math.PI*r());
-  const vals=Array.from({length:1000},()=>0.99+0.15*g());
-  const lo=0.6,hi=1.4,bw=0.025,nb=Math.round((hi-lo)/bw),bins=new Array(nb).fill(0);
-  vals.forEach(v=>{const i=Math.floor((v-lo)/bw);if(i>=0&&i<nb)bins[i]++});
-  const W=520,H=300,L=40,R=12,T=16,B=40,pw=W-L-R,ph=H-T-B,max=Math.ceil(Math.max(...bins)/20)*20;
+  const vals=[0.819,0.752,0.777,0.869,0.859,1.009,0.921,1.313,1.026,1.199,1.052,0.913,1.113,0.998,1.024,0.997,0.611,0.833,0.962,1.123,1.186,1.119,1.047,0.989,0.932,0.851,1.024,0.946,1.019,1.114,0.992,1.134,1.08,1.01,0.904,0.941,1.034,1.004,1.038,1.106,0.947,0.896,1.242,1.104,1.47,0.846,1.031,0.692,0.986,0.904,1.151,1.031,1.011,0.687,1.167,0.936,0.931,0.994,1.041,0.696,1.176,0.988,1.234,1.043,1.007,1.067,1.286,1.114,1.096,0.898,0.842,1.218,1.164,1.752,1.048,0.997,0.884,0.892,0.991,0.854,0.942,1.012,1.034,0.987,1.137,1.462,0.899,1.079,1.218,1.217,0.976,0.787,0.866,1.263,1.112,0.77,0.984,0.864,0.944,1.058,0.706,1.274,0.996,1.019,1.03,0.841,0.991,1.12,1.124,1.014,0.855,1.044,0.798,1.002,1.106,0.723,0.978,1.079,1.05,1.181,1.017,1.131,0.928,1.102,1.053,0.824,1.329,1.073,1.185,1.01,0.939,1.025,1.225,1.002,0.954,0.902,1.132,0.833,0.994,0.915,1.058,0.957,1.307,0.97,1.091,1.226,1.442,1.152,0.988,1.201,1.078,1.059,0.947,1.164,0.86,0.978,1.128,0.955,0.748,1.148,0.953,0.982,1.313,0.712,1.073,1.159,1.209,1.016,1.417,1.107,1.009,0.87,1.2,0.79,1.095,1.263,1.394,1.056,0.924,0.861,0.856,1.059,1.176,1.053,0.952,0.774,1.119,1.37,1.062,1.342,1.01,1.141,1.184,0.891,1.301,1.309,1.071,1.042,1.075,0.866,0.863,1.031,1.029,1.029,0.935,1.25,1.146,1.268,1.078,1.259,1.04,1.088,1.212,0.777,0.813,0.988,0.947,0.924,1.087,1.417,0.981,1.033,1.159,0.888,0.89,1.417,1.198,1.238,1.215,1.016,0.941,0.952,1.111,1.112,1.369,0.978,0.835,1.223,1.255,0.875,1.266,1.177,0.956,1.11,1.068,1.001,0.914,1.063,0.977,0.873,1.069,1.147,0.993,0.96,1.266,1.056,0.763,1.052,1.297,1.082,0.969,0.837,1.089,1.07,0.915,1.489,0.981,0.831,1.058,1.083,0.978,0.863,0.981,1.188,0.77,0.835,1.15,1.09,0.937,1.261,1.291,0.915,1.184,0.912,1.061,1.053,1.056,1.016,1.289,0.773,1.02,1.014,1.04,1.181,1.084,0.83,1.302,0.989,0.916,0.921,1.038,1.224,1.147,0.698,1.563,0.907,0.805,1.402,0.769,0.933,0.848,0.88,1.29,1.197,0.901,0.923,1.244,1.153,1.003,1.034,0.982,1.142,1.074,1.096,1.263,0.961,0.764,1.035,0.837,0.899,1.112,0.937,0.867,0.963,1.304,1.067,0.773,1.102,0.918,0.832,1.181,1.093,1.222,1.408,0.895,0.885,1.043,1.41,1.219,0.712,1.08,1.413,1.358,1.022,0.802,0.919,0.894,1.063,1.045,0.831,0.947,1.169,1.046,1.155,0.891,1.096,1.003,1.243,1.099,1.489,0.717,0.771,0.994,0.975,1.063,0.816,1.062,1.074,0.982,1.024,0.697,1.339,0.952,1.152,1.083,0.948,0.789,0.888,1.23,0.857,1.288,0.861,1.196,0.984,0.651,0.952,1.243,1.071,0.878,0.672,1.177,0.973,1.405,0.782,1.242,1.218,1.03,0.873,0.663,0.641,0.926,0.992,0.884,1.053,1.005,1.03,0.915,0.943,1.181,0.799,1.049,1.048,1.21,0.992,0.88,1.273,1.224,0.902,0.544,1.006,1.19,1.384,0.988,1.167,1.438,1.147,1.015,1.245,1.068,0.795,1.22,1.159,0.668,1.225,1.024,1.023,1.013,1.059,1.23,1.227,0.786,1.251,0.737,1.256,1.091,1.031,1.095,1.403,0.93,0.71,1.151,1.606,0.875,0.909,1.13,0.888,1.097,0.727,1.066,0.881,1.217,1.004,0.997,0.82,1.378,1.073,0.943,1.015,1.21,0.93,1.176,1.058,1.118,1.111,1.127,0.976,0.757,0.976,0.783,1.341,0.873,1.317,1.174,1.082,1.46,0.981,0.858,1.045,1.366,0.927,1.145,1.181,0.794,1.088,1.162,0.98,1.042,1.205,1.49,0.803,1.13,1.103,1.177,0.86,1.622,0.964,1.101,1.2,1.184,0.743,0.773,1.19,1.255,1.123,1.05,1.024,0.992,0.993,0.865,0.993,0.953,1.237,0.931,0.905,0.993,1.164,0.951,0.89,1.135,1.207,0.707,1.073,1.02,1.223,1.051,1.037,1.118,0.794,1.265,1.218,0.794,1.292,1.105,1.475,1.163,1.188,1.05,0.964,1.24,1.145,0.811,1.05,0.96,1.148,0.812,1.136,1.026,1.263,1.042,0.727,1.466,0.9,1.099,1.064,0.78,1.265,0.985,0.966,0.713,1.053,0.858,0.903,0.937,1.289,0.878,0.983,0.879,1.19,0.994,1.171,1.015,0.982,0.923,1.259,1.039,1.022,0.797,1.038,0.971,0.561,1.241,0.899,0.965,1.313,1.126,0.891,1.173,0.864,1.003,0.783,0.806,0.991,1.117,0.968,1.198,0.907,1.062,0.769,1.031,0.878,1.038,1.087,0.96,0.924,1.091,1.004,1.036,0.839,1.206,1.138,1.192,0.836,1.472,1.028,0.83,0.958,0.97,0.794,0.77,0.792,1.266,1.01,0.731,0.957,0.861,0.867,0.879,1.119,0.683,0.985,1.002,0.765,1.004,1.042,1.122,1.579,1.109,0.975,0.88,1.08,1.06,1.071,0.842,0.811,1.122,0.963,0.936,0.787,0.865,0.825,1.004,1.19,1.216,1.215,0.957,1.046,1.056,1.412,0.955,1.062,0.941,0.997,1.079,0.794,0.959,1.106,1.001,1.096,1.143,1.121,1.032,0.829,1.296,0.839,1.032,0.775,0.955,0.971,0.958,0.734,1.081,1.082,1.0,0.795,0.975,0.943,1.14,0.922,0.926,1.402,0.972,1.0,0.812,1.044,1.038,1.682,0.981,1.171,0.897,1.327,1.117,1.025,1.269,1.094,1.138,1.278,1.099,1.161,0.987,0.906,1.111,1.097,0.918,0.895,1.048,1.204,1.148,0.99,1.192,1.071,1.147,1.23,0.892,1.093,1.042,0.911,0.856,1.047,0.97,1.403,0.81,1.191,1.042,1.002,0.886,0.926,1.093,1.211,1.423,1.052,1.211,1.001,0.744,1.006,1.084,1.131,0.909,1.014,1.09,0.769,0.839,1.202,1.331,1.263,0.787,0.922,1.2,1.19,0.99,1.038,0.839,1.209,0.935,1.046,0.811,1.07,1.094,0.78,1.196,1.133,1.097,0.772,0.875,1.071,1.004,1.086,1.335,1.687,1.503,1.07,0.943,1.357,1.06,1.375,1.175,0.831,0.989,0.798,0.783,0.995,1.033,1.044,0.779,0.957,0.961,0.992,1.056,0.928,0.787,0.962,1.041,0.847,1.092,1.214,1.15,1.106,1.164,0.934,1.261,1.149,0.794,0.843,1.005,1.197,0.755,1.023,1.171,1.13,0.783,1.064,0.801,0.933,0.918,1.06,0.942,1.042,1.292,1.381,0.858,1.159,1.605,1.144,1.084,1.146,0.931,0.893,1.091,1.258,1.308,1.294,1.179,1.338,0.818,1.124,1.56,1.094,0.706,0.97,1.183,0.982,1.265,1.057,1.319,1.01,1.17,1.008,1.225,0.893,0.773,1.006,0.85,1.078,0.953,1.106,1.268,1.455,0.877,1.128,1.13,1.0,1.125,0.984,1.353,1.057,1.323,0.869,1.075,0.96,0.851,0.91,0.96,1.246,1.089,1.004,1.439,0.895,0.903,1.248,1.252,1.028,1.106,0.804,0.818,1.241,0.931,0.979,1.192,1.356,1.005,1.225,0.995,1.297,1.262,1.011,1.105,1.14,0.94,1.164,1.227,1.343,1.025,1.547,0.905,0.834,0.777,0.88,1.176,0.964,0.819,1.097,1.0,0.931,0.778,0.801,0.918,1.303,0.792,1.233,1.042,1.146,0.716,0.944,0.851,1.081,1.197,0.735,1.035,0.835,0.749,1.01,1.117,0.868,1.218,1.207,1.242,1.359,1.28,1.383,0.97,1.04,0.919,1.098,0.775,1.141,0.962,1.063,1.133,1.049,1.153,1.455,1.437,0.707,1.055,1.181,1.407,1.006,1.015,0.931,0.947,1.128,1.192,1.041,1.024,1.183,0.863,1.013,0.772,1.032,0.898,0.939];
+  const lo=0.5,hi=1.8,bw=0.025,nb=Math.round((hi-lo)/bw),bins=new Array(nb).fill(0);
+  vals.forEach(v=>{const i=Math.min(nb-1,Math.max(0,Math.floor((v-lo)/bw)));bins[i]++});
+  const W=520,H=300,L=40,R=12,T=16,B=40,pw=W-L-R,ph=H-T-B,max=Math.ceil(Math.max(...bins)/20)*20+20; // margen arriba para la etiqueta del bot
   const x=v=>L+(v-lo)/(hi-lo)*pw,y=c=>T+ph-c/max*ph;
   const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e};
   for(let c=0;c<=max;c+=max/4){el('line',{x1:L,x2:W-R,y1:y(c),y2:y(c),stroke:'var(--line)','stroke-width':1});
     el('text',{x:L-8,y:y(c)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=c}
-  const bot=1.08,above=vals.filter(v=>v>=bot).length;
-  bins.forEach((c,i)=>{const v0=lo+i*bw;el('rect',{x:x(v0)+1,y:y(c),width:pw/nb-2,height:y(0)-y(c),rx:2,fill:v0+bw>bot?'var(--alarm-soft)':'var(--line)'})});
-  for(let v=0.6;v<=1.401;v+=0.2){el('text',{x:x(v),y:H-B+20,'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=v.toFixed(1).replace('.',',')}
-  el('text',{x:L+pw/2,y:H-4,'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--f-body)'}).textContent='Factor de beneficio (PF)';
-  el('line',{x1:x(bot),x2:x(bot),y1:T,y2:y(0),stroke:'var(--alarm)','stroke-width':2.5});
-  el('text',{x:x(bot)+8,y:T+14,'font-size':12,fill:'var(--alarm)','font-weight':700,'font-family':'var(--f-mono)'}).textContent='Bot: PF 1,08';
-  el('text',{x:x(bot)+8,y:T+30,'font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=(above/10).toFixed(0)+'% al azar igual o mejor';
+  const bot=1.346,above=vals.filter(v=>v>=bot).length;
+  bins.forEach((c,i)=>{const v0=lo+i*bw;el('rect',{x:x(v0)+0.8,y:y(c),width:pw/nb-1.6,height:y(0)-y(c),rx:1.5,fill:v0+bw>bot?'var(--alarm)':'var(--line)','fill-opacity':v0+bw>bot?0.55:1})});
+  for(let v=0.6;v<=1.801;v+=0.2){el('text',{x:x(v),y:H-B+20,'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=v.toFixed(1).replace('.',',')}
+  el('text',{x:L+pw/2,y:H-4,'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--f-body)'}).textContent='Factor de beneficio (PF) de cada historia al azar';
+  el('line',{x1:x(bot),x2:x(bot),y1:T,y2:y(0),stroke:'var(--ink)','stroke-width':2.5});
+  el('text',{x:x(bot)-8,y:T+14,'text-anchor':'end','font-size':12,fill:'var(--ink)','font-weight':700,'font-family':'var(--f-mono)'}).textContent='Bot real: PF 1,35';
+  el('text',{x:x(bot)-8,y:T+30,'text-anchor':'end','font-size':11,fill:'var(--muted)','font-family':'var(--f-mono)'}).textContent=(above/10).toFixed(1).replace('.',',')+' % del azar igual o mejor';
 })();
 </script>
 </body>
