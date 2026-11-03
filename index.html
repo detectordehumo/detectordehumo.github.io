@@ -56,6 +56,13 @@ a{color:inherit}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .btn[disabled]{opacity:.6;cursor:wait}
+.launch{display:flex;flex-wrap:wrap;align-items:center;gap:.6em 1em;background:var(--alarm-soft);border:2px solid var(--alarm);border-radius:18px;padding:.9em 1.2em;margin:0 0 22px;color:var(--ink)}
+.launch b{color:var(--alarm)}
+.launch a{font-weight:700;color:var(--alarm)}
+.gratis{background:var(--alarm-soft);border:2px solid var(--alarm);border-radius:22px;padding:1.4em 1.6em;margin:0 0 28px}
+.gratis h3{margin:0 0 .4em;color:var(--alarm)}
+.gratis ul{margin:.6em 0 1em 1.1em;padding:0}
+.gratis li{margin:.25em 0}
 :focus-visible{outline:3px solid var(--alarm);outline-offset:3px}
 
 header{padding-block:22px}
@@ -202,6 +209,7 @@ footer .wrap{display:grid;gap:10px}
   <section class="hero">
     <div class="wrap">
       <div class="hero-copy">
+        <p class="launch"><b>🔥 Lanzamiento:</b> <span>las primeras <b>5 auditorías completas son GRATIS</b>.</span> <a href="#gratis">Ver cómo pedirla →</a></p>
         <p class="eyebrow" style="color:var(--alarm);font-weight:600">Auditoría de bots de trading · MT5 y StrategyQuant</p>
         <h1 style="margin-top:14px">¿Tu bot tiene ventaja real o es <em>humo</em>?</h1>
         <p class="lead">Antes de ponerlo en una cuenta real o en un fondeo, lo sometemos a las pruebas que casi nadie hace: costos reales de tu broker, Monte Carlo, prueba de azar y comparación contra comprar y mantener.</p>
@@ -288,6 +296,12 @@ footer .wrap{display:grid;gap:10px}
   <section class="block" id="precios" style="padding-top:0">
     <div class="wrap">
       <div class="head"><p class="eyebrow">Precios</p><h2>Más barato que un mes perdiendo con un bot malo</h2></div>
+      <div class="gratis" id="gratis">
+        <h3>🔥 Lanzamiento: 5 auditorías completas GRATIS</h3>
+        <p>Estamos arrancando y queremos mostrar casos reales. Las primeras 5 personas reciben la <b>Auditoría completa</b> (las seis pruebas + informe PDF) sin costo.</p>
+        <ul><li>Un bot por persona (MT5 o StrategyQuant).</li><li>A cambio, nos dejás publicar el caso <b>anonimizado</b> (sin tu nombre ni tu código) y nos contás qué te pareció.</li><li>Se asignan por orden de llegada.</li></ul>
+        <a class="btn" href="#contacto" data-plan="Auditoría GRATIS de lanzamiento">Quiero una de las 5</a>
+      </div>
       <div class="plans">
         <div class="plan">
           <h3>Chequeo rápido</h3>
@@ -357,7 +371,7 @@ footer .wrap{display:grid;gap:10px}
         <label class="hp" aria-hidden="true">No completar<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
         <label for="nombre">Nombre<input id="nombre" name="nombre" autocomplete="name" placeholder="Tu nombre" required></label>
         <label for="mail">Mail<input id="mail" name="email" type="email" autocomplete="email" placeholder="Donde te respondemos" required></label>
-        <label for="plan">Servicio<select id="plan" name="servicio"><option>Chequeo rápido</option><option selected>Auditoría completa</option><option>Auditoría para fondeo</option></select></label>
+        <label for="plan">Servicio<select id="plan" name="servicio"><option>Auditoría GRATIS de lanzamiento</option><option>Chequeo rápido</option><option selected>Auditoría completa</option><option>Auditoría para fondeo</option></select></label>
         <label for="bot">Tu bot<textarea id="bot" name="bot" placeholder="Activo, temporalidad, broker o prop firm (ej.: XAUUSD H1, FTMO 100k)"></textarea></label>
         <button class="btn" type="submit" id="send">Pedir presupuesto</button>
         <p id="ok" hidden role="status"></p>
